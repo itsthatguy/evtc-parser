@@ -33,7 +33,7 @@ export default class Parser {
     skillCount: null,
     skills: [],
     players: [],
-    eventCount: null;
+    eventCount: null,
     events: [],
   };
 
