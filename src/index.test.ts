@@ -1,3 +1,5 @@
+import { CombatResult } from './CombatEvents';
+
 describe('evtc-parser', () => {
   const parser = require('./index');
   let data;
@@ -17,7 +19,7 @@ describe('evtc-parser', () => {
     });
 
     it('contains a boss named `Gorseval the Multifarious`', () => {
-      expect(data.encounter.agents.filter(a => a.isBoss)[0].name).toEqual('Gorseval the Multifarious');
+      expect(data.encounter.agents.find(a => a.isBoss).name).toEqual('Gorseval the Multifarious');
     });
 
     it('contains a player with account `itsthatguy.1062`', () => {

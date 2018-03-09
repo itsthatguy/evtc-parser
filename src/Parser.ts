@@ -122,4 +122,16 @@ export default class Parser {
       encounter.events.push(event);
     }
   }
+
+  public boss () {
+    return this.encounter.agents.find(a => a.isBoss);
+  }
+
+  public players () {
+    return this.encounter.agents.filter(a => a.isPlayer);
+  }
+
+  parseDPS (encounter) {
+    return 'NOT IMPLEMENTED';
+  }
 }
