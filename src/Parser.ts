@@ -1,5 +1,6 @@
 import SmartBuffer from './smarter-buffer';
-import createAgent, { Player } from './agents';
+import createAgent from './Agents';
+import createEvent from './Events';
 
 type Encounter = {
   arcVersion: number;
@@ -123,7 +124,7 @@ export default class Parser {
     }
   }
 
-  public boss () {
+  public boss = () => {
     return this.encounter.agents.find(a => a.isBoss);
   }
 

@@ -44,4 +44,13 @@ describe('evtc-parser', () => {
       expect(data.encounter.events).toHaveLength(115914);
     });
   });
+
+  describe('computed', () => {
+    it('has dps', () => {
+      expect(data.player('Spoiled Ice Cream').totalDamage(data)).toEqual(4424215)
+      expect(data.player('Viking Clawhug').totalDamage(data)).toEqual(1419913)
+      expect(data.player('Albireo North').totalDamage(data)).toEqual(3484548)
+      expect(data.player('Morat Gurgeh').totalDamage(data)).toEqual(2894145)
+    });
+  });
 });
