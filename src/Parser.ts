@@ -132,6 +132,17 @@ export default class Parser {
     return this.encounter.agents.filter(a => a.isPlayer);
   }
 
+  public player (nameOrAccountOrId) {
+    return this.players().find(a => {
+      return a.name == nameOrAccountOrId
+        || a.account === nameOrAccountOrId
+        || a.agentId === nameOrAccountOrId;
+    });
+  }
+
+  public totalDamage () {
+  }
+
   parseDPS (encounter) {
     return 'NOT IMPLEMENTED';
   }
