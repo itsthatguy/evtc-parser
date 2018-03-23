@@ -2,7 +2,6 @@ import { BaseAgent } from './base';
 import { CombatResult, CombatStateChange, CombatActivation } from '../CombatEvents';
 import { find } from 'lodash';
 const specializations = require('../../__data__/specializations.json')
-const skills = require('../../skills.json')
 
 export class Player extends BaseAgent {
   public isPlayer: boolean = true;
@@ -36,7 +35,7 @@ export class Player extends BaseAgent {
   }
 
   private isKnownStateChange (event) {
-    return event.isStateChange <= Object.keys(CombatStateChange).length;
+    return event.isStateChange < 16;
   }
 
   eventsForTargetId (events, targetId) {
@@ -44,9 +43,11 @@ export class Player extends BaseAgent {
       if (!this.isKnownStateChange(event)) return false;
 
       const isAgainstTarget = event.dstAgent === targetId;
+      const isCancelled = event.isActivation > 0;
 
       return this.isPlayerOwned(event)
         && isAgainstTarget
+        && !isCancelled
         && this.isSuccessfulHit(event);
     });
   };
@@ -67,11 +68,12 @@ export class Player extends BaseAgent {
     return events.filter(event => {
       if (!this.isKnownStateChange(event)) return false;
 
-      const cancelled = event.isActivation > 0;
+      const isCancelled = event.isActivation > 0;
       const isCorrectSkill = event.skillId === skill.skillId;
 
-      return this.isPlayerOwned(event)
-        && isCorrectSkill
+      return isCorrectSkill
+        && !isCancelled
+        && this.isPlayerOwned(event)
         && this.isSuccessfulHit(event);
     });
   };
