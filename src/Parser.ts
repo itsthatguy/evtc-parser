@@ -1,6 +1,7 @@
 import SmartBuffer from './smarter-buffer';
 import createAgent from './Agents';
 import createEvent from './Events';
+import { CombatStateChange } from './CombatEvents';
 
 type Encounter = {
   arcVersion: number;
@@ -46,6 +47,17 @@ export default class Parser {
     this.parseSkills();
     this.parseEvents();
     this.addInstanceIds();
+    this.addAwareTimes();
+  }
+
+  private addAwareTimes () {
+    const { agents, events } = this.encounter;
+
+    agents.map((agent) => {
+      agent.firstAware = events[0].time
+      agent.lastAware = events[events.length-1].time
+      return agent;
+    });
   }
 
   private addInstanceIds() {
