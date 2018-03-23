@@ -26,8 +26,9 @@ describe('damage', () => {
       expect(player.cleaveDamage(data)).toEqual(5492039)
     });
     it('Foxi Shadi', () => {
-      expect(data.player('Foxi Shadi').bossDamage(data)).toEqual(3312402)
-      expect(data.player('Foxi Shadi').cleaveDamage(data)).toEqual(5124294)
+      const player = data.player('Foxi Shadi')
+      expect(player.bossDamage(data)).toEqual(3312402)
+      expect(player.cleaveDamage(data)).toEqual(5124294)
     });
 
     it('Eloo Siev', () => {
@@ -37,20 +38,30 @@ describe('damage', () => {
     });
 
     it('Lokizen', () => {
-      const p = data.player('Lokizen')
-      expect(data.player('Lokizen').bossDamage(data)).toEqual(506654)
+      const player = data.player('Lokizen')
+      expect(player.bossDamage(data)).toEqual(506654)
+      expect(player.cleaveDamage(data)).toEqual(704630)
     });
     it('Lanayia Swiftslayer', () => {
-      expect(data.player('Lanayia Swiftslayer').bossDamage(data)).toEqual(706498)
+      const player = data.player('Lanayia Swiftslayer')
+      expect(player.bossDamage(data)).toEqual(706498)
+      expect(player.cleaveDamage(data)).toEqual(835147)
     });
     it('Trahaldir', () => {
-      expect(data.player('Trahaldir').bossDamage(data)).toEqual(412834)
+      const player = data.player('Trahaldir')
+      expect(player.bossDamage(data)).toEqual(412834)
+      expect(player.cleaveDamage(data)).toEqual(578768)
     });
     it('Náme Here', () => {
-      expect(data.player('Náme Here').bossDamage(data)).toEqual(927127)
+      const player = data.player('Náme Here')
+      expect(player.bossDamage(data)).toEqual(927127)
+      expect(player.cleaveDamage(data)).toEqual(1426792)
     });
+
     it('Morat Gurgeh', () => {
-      expect(data.player('Morat Gurgeh').bossDamage(data)).toEqual(2894145)
+      const player = data.player('Morat Gurgeh')
+      expect(player.bossDamage(data)).toEqual(2894145)
+      expect(player.cleaveDamage(data)).toEqual(4585659)
     });
 
     it('has correct downs', () => {

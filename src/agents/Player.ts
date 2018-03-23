@@ -54,11 +54,10 @@ export class Player extends BaseAgent {
     return events.filter(event => {
       if (!this.isKnownStateChange(event)) return false;
       const isPlayer = this.isPlayerOwned(event)
-      // const isPlayer = event.srcAgent === this.agentId;
       const isFoe = event.iff === IFF.FOE;
       const isCancelled = event.isActivation > 0;
       const isEnemy = isPlayer && agents.filter(a => {
-        return a.agentId === event.dstAgent
+        return (a.agentId === event.dstAgent || a.instanceId === event.srcMasterInstId)
           && (a.isNpc || a.isBoss || a.isGadget)
       }).length > 0;
 
@@ -87,8 +86,8 @@ export class Player extends BaseAgent {
   };
 
   private damageFor (events) {
-    return events.map((e) => {
-      const damage = (e.buff) ? e.buffDamage : e.value;
+    return [...events].map((e) => {
+      let damage = (e.buff) ? e.buffDamage : e.value;
       return (damage > 0) ? damage : 0;
     });
   }
