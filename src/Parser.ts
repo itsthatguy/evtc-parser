@@ -41,26 +41,39 @@ export default class Parser {
   constructor (buffer) {
     this.buffer = SmartBuffer.fromBuffer(buffer);
 
-    this.parseMetadata(this.encounter);
-    this.parseAgents(this.encounter);
-    this.parseSkills(this.encounter);
-    this.parseEvents(this.encounter);
+    this.parseMetadata();
+    this.parseAgents();
+    this.parseSkills();
+    this.parseEvents();
+    this.addInstanceIds();
   }
 
-  private parseMetadata (encounter) {
+  private addInstanceIds() {
+    this.encounter.events.forEach((event) => {
+      this.encounter.agents.map((agent) => {
+        if (agent.agentId === event.srcAgent && !event.isStateChange) {
+          agent.instanceId = event.srcInstId;
+        }
+
+        return agent;
+      });
+    })
+  }
+
+  private parseMetadata () {
     this.encounter.arcVersion = this.buffer.readString(BYTES.arcVersion);
     this.encounter.targetSpeciesId = this.buffer.skip(1).readUIntLE(BYTES.targetSpeciesId);
   }
 
-  private parseAgents (encounter) {
+  private parseAgents () {
     this.encounter.agentCount = this.buffer.skip(1).readUIntLE(4);
     this.buffer.setBookmark('agents');
     this.buffer.readUIntLE(BYTES.agentsCount);
 
-    for (let i = 0; i < encounter.agentCount; i++) {
+    for (let i = 0; i < this.encounter.agentCount; i++) {
       this.buffer.useBookmark('agents');
       this.buffer.skip(BYTES.agents * i);
-      const agent = createAgent(encounter, {
+      const agent = createAgent(this.encounter, {
         agentId: this.buffer.readUIntLE(8),
         profession: this.buffer.readUIntLE(4),
         isElite: this.buffer.readUIntLE(4),
@@ -74,26 +87,26 @@ export default class Parser {
     }
   }
 
-  private parseSkills (encounter) {
-    encounter.skillCount = this.buffer.readUIntLE(BYTES.skillCount);
+  private parseSkills () {
+    this.encounter.skillCount = this.buffer.readUIntLE(BYTES.skillCount);
     this.buffer.setBookmark('skills');
 
-    for (let i = 0; i < encounter.skillCount; i++) {
+    for (let i = 0; i < this.encounter.skillCount; i++) {
       this.buffer.useBookmark('skills')
       this.buffer.skip(BYTES.skills * i);
 
-      encounter.skills.push({
+      this.encounter.skills.push({
         skillId: this.buffer.readUIntLE(4),
         name: this.buffer.readString(64)
       });
     }
   }
 
-  private parseEvents (encounter) {
-    encounter.eventCount = this.buffer.remaining() / 64;
+  private parseEvents () {
+    this.encounter.eventCount = this.buffer.remaining() / BYTES.combatEvents;
     this.buffer.setBookmark('events');
 
-    for (let i = 0; i < encounter.eventCount; i++) {
+    for (let i = 0; i < this.encounter.eventCount; i++) {
       this.buffer.useBookmark('events')
       this.buffer.skip(BYTES.combatEvents * i);
       const event = {
@@ -120,7 +133,7 @@ export default class Parser {
         isShields: this.buffer.readUIntLE(1),
       };
 
-      encounter.events.push(event);
+      this.encounter.events.push(event);
     }
   }
 
@@ -143,7 +156,7 @@ export default class Parser {
   public totalDamage () {
   }
 
-  parseDPS (encounter) {
+  parseDPS () {
     return 'NOT IMPLEMENTED';
   }
 }

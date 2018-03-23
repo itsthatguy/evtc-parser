@@ -1,11 +1,14 @@
 import { BaseAgent } from './base';
-import { CombatResult } from '../CombatEvents';
+import { CombatResult, CombatStateChange, CombatActivation } from '../CombatEvents';
+import { find } from 'lodash';
 const specializations = require('../../__data__/specializations.json')
+const skills = require('../../skills.json')
 
 export class Player extends BaseAgent {
   public isPlayer: boolean = true;
   public account: string;
   public subgroup: number;
+  public instanceId: number;
 
   constructor (properties: AgentProperties) {
     super(properties);
@@ -19,20 +22,32 @@ export class Player extends BaseAgent {
     this.subgroup = parseInt(nameArray[2]);
   }
 
-  private successfulHit (event) {
-    return event.result !== CombatResult.BLOCK
-      && event.result !== CombatResult.EVADE
+  private isSuccessfulHit (event) {
+    return event.result !== CombatResult.EVADE
       && event.result !== CombatResult.ABSORB
       && event.result !== CombatResult.BLIND;
   }
 
-  eventsForTargetId (events, targetId, equal = true) {
-    return events.filter(e => {
-      const goodTarget = e.srcAgent === this.agentId
-        && ((e.dstAgent === targetId) === equal)
-        && e.dstAgent !== 0
+  private isPlayerOwned (event) {
+    const isPet = event.srcMasterInstId === this.instanceId;
+    const isPlayer = event.srcAgent === this.agentId;
 
-      return goodTarget && this.successfulHit(e);
+    return isPet || isPlayer;
+  }
+
+  private isKnownStateChange (event) {
+    return event.isStateChange <= Object.keys(CombatStateChange).length;
+  }
+
+  eventsForTargetId (events, targetId) {
+    return events.filter(event => {
+      if (!this.isKnownStateChange(event)) return false;
+
+      const isAgainstTarget = event.dstAgent === targetId;
+
+      return this.isPlayerOwned(event)
+        && isAgainstTarget
+        && this.isSuccessfulHit(event);
     });
   };
 
@@ -42,19 +57,22 @@ export class Player extends BaseAgent {
         && this.agentId !== e.dstAgent
         && e.dstAgent !== 0
 
-      return goodTarget && this.successfulHit(e);
+      return goodTarget && this.isSuccessfulHit(e);
     });
   };
 
   filterSkillEvents (events, skills, name) {
-    const filterSkill = skills.find(s => s.name === name);
+    const skill = skills.find(s => s.name === name);
 
-    return events.filter(e => {
-      const goodTarget = e.srcAgent === this.agentId
-        && e.skillId === filterSkill.skillId
-        && e.dstAgent !== 0;
+    return events.filter(event => {
+      if (!this.isKnownStateChange(event)) return false;
 
-      return goodTarget && this.successfulHit(e);
+      const cancelled = event.isActivation > 0;
+      const isCorrectSkill = event.skillId === skill.skillId;
+
+      return this.isPlayerOwned(event)
+        && isCorrectSkill
+        && this.isSuccessfulHit(event);
     });
   };
 
@@ -67,7 +85,7 @@ export class Player extends BaseAgent {
 
   sum = (v) => v.reduce((a, b) => a + b, 0)
 
-  public totalDamage ({ boss, encounter }) {
+  public bossDamage ({ boss, encounter }) {
     const bossEvents = this.eventsForTargetId(encounter.events, boss().agentId);
     const bossDamage = this.damageFor(bossEvents);
     return this.sum(bossDamage)
@@ -79,9 +97,18 @@ export class Player extends BaseAgent {
     return this.sum(cleaveDamage);
   }
 
-  public skillTotal ({ events, skills }, name) {
+  public skillDamage ({ events, skills }, name) {
     const skillEvents = this.filterSkillEvents(events, skills, name);
     const skillDamage = this.damageFor(skillEvents);
     return this.sum(skillDamage);
+  }
+
+  public downs ({ encounter }): number {
+    return encounter.events.filter(event => {
+      const playerEvent = event.srcAgent === this.agentId;
+      const isDown = event.isStateChange === CombatStateChange.CHANGEDOWN;
+
+      return isDown && playerEvent;
+    }).length;
   }
 }
