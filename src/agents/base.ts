@@ -8,6 +8,9 @@ export class BaseAgent {
   public healing: number;
   public condition: number;
   public name: string;
+  public instanceId: number;
+  public firstAware: number;
+  public lastAware: number;
 
   constructor (properties: AgentProperties) {
     this.agentId = properties.agentId;

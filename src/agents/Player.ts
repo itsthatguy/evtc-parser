@@ -1,13 +1,11 @@
 import { BaseAgent } from './base';
-import { CombatResult, CombatStateChange, CombatActivation } from '../CombatEvents';
-import { find } from 'lodash';
+import { CombatResult, CombatStateChange, CombatActivation, IFF } from '../CombatEvents';
 const specializations = require('../../__data__/specializations.json')
 
 export class Player extends BaseAgent {
   public isPlayer: boolean = true;
   public account: string;
   public subgroup: number;
-  public instanceId: number;
 
   constructor (properties: AgentProperties) {
     super(properties);
@@ -52,13 +50,23 @@ export class Player extends BaseAgent {
     });
   };
 
-  eventsForAll (events) {
-    return events.filter(e => {
-      const goodTarget = e.srcAgent === this.agentId
-        && this.agentId !== e.dstAgent
-        && e.dstAgent !== 0
+  eventsForAll (events, agents) {
+    return events.filter(event => {
+      if (!this.isKnownStateChange(event)) return false;
+      const isPlayer = this.isPlayerOwned(event)
+      // const isPlayer = event.srcAgent === this.agentId;
+      const isFoe = event.iff === IFF.FOE;
+      const isCancelled = event.isActivation > 0;
+      const isEnemy = isPlayer && agents.filter(a => {
+        return a.agentId === event.dstAgent
+          && (a.isNpc || a.isBoss || a.isGadget)
+      }).length > 0;
 
-      return goodTarget && this.isSuccessfulHit(e);
+      return isPlayer
+        && isFoe
+        && isEnemy
+        && !isCancelled
+        && this.isSuccessfulHit(event)
     });
   };
 
@@ -93,8 +101,8 @@ export class Player extends BaseAgent {
     return this.sum(bossDamage)
   }
 
-  public cleaveDamage ({ events }) {
-    const cleaveEvents = this.eventsForAll(events);
+  public cleaveDamage ({ encounter }) {
+    const cleaveEvents = this.eventsForAll(encounter.events, encounter.agents);
     const cleaveDamage = this.damageFor(cleaveEvents);
     return this.sum(cleaveDamage);
   }

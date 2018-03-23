@@ -38,3 +38,9 @@ export enum CombatActivation {
 	CANCEL_CANCEL, // cancel without reaching channel time
 	RESET // animation completed fully
 };
+
+export enum IFF {
+  FRIEND, // green vs green, red vs red
+  FOE, // green vs red
+  UNKNOWN // something very wrong happened
+}

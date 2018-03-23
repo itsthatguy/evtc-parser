@@ -1,4 +1,4 @@
-describe('evtc-parser', () => {
+describe('agents', () => {
   const parser = require('../src/index');
   let data;
 
@@ -14,10 +14,6 @@ describe('evtc-parser', () => {
 
     it('contains 1 boss', () => {
       expect(data.encounter.agents.filter(a => a.isBoss)).toHaveLength(1);
-    });
-
-    it('contains a boss named `Gorseval the Multifarious`', () => {
-      expect(data.encounter.agents.find(a => a.isBoss).name).toEqual('Gorseval the Multifarious');
     });
 
     it('contains a player with account `itsthatguy.1062`', () => {
