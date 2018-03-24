@@ -1,5 +1,7 @@
 import SmartBuffer from './smarter-buffer';
-import createAgent, { Player } from './agents';
+import createAgent from './Agents';
+import createEvent from './Events';
+import { CombatStateChange } from './CombatEvents';
 
 type Encounter = {
   arcVersion: number;
@@ -40,26 +42,50 @@ export default class Parser {
   constructor (buffer) {
     this.buffer = SmartBuffer.fromBuffer(buffer);
 
-    this.parseMetadata(this.encounter);
-    this.parseAgents(this.encounter);
-    this.parseSkills(this.encounter);
-    this.parseEvents(this.encounter);
+    this.parseMetadata();
+    this.parseAgents();
+    this.parseSkills();
+    this.parseEvents();
+    this.addInstanceIds();
+    this.addAwareTimes();
   }
 
-  private parseMetadata (encounter) {
+  private addAwareTimes () {
+    const { agents, events } = this.encounter;
+
+    agents.map((agent) => {
+      agent.firstAware = events[0].time
+      agent.lastAware = events[events.length-1].time
+      return agent;
+    });
+  }
+
+  private addInstanceIds() {
+    this.encounter.events.forEach((event) => {
+      this.encounter.agents.map((agent) => {
+        if (agent.agentId === event.srcAgent && !event.isStateChange) {
+          agent.instanceId = event.srcInstId;
+        }
+
+        return agent;
+      });
+    })
+  }
+
+  private parseMetadata () {
     this.encounter.arcVersion = this.buffer.readString(BYTES.arcVersion);
     this.encounter.targetSpeciesId = this.buffer.skip(1).readUIntLE(BYTES.targetSpeciesId);
   }
 
-  private parseAgents (encounter) {
+  private parseAgents () {
     this.encounter.agentCount = this.buffer.skip(1).readUIntLE(4);
     this.buffer.setBookmark('agents');
     this.buffer.readUIntLE(BYTES.agentsCount);
 
-    for (let i = 0; i < encounter.agentCount; i++) {
+    for (let i = 0; i < this.encounter.agentCount; i++) {
       this.buffer.useBookmark('agents');
       this.buffer.skip(BYTES.agents * i);
-      const agent = createAgent(encounter, {
+      const agent = createAgent(this.encounter, {
         agentId: this.buffer.readUIntLE(8),
         profession: this.buffer.readUIntLE(4),
         isElite: this.buffer.readUIntLE(4),
@@ -73,26 +99,26 @@ export default class Parser {
     }
   }
 
-  private parseSkills (encounter) {
-    encounter.skillCount = this.buffer.readUIntLE(BYTES.skillCount);
+  private parseSkills () {
+    this.encounter.skillCount = this.buffer.readUIntLE(BYTES.skillCount);
     this.buffer.setBookmark('skills');
 
-    for (let i = 0; i < encounter.skillCount; i++) {
+    for (let i = 0; i < this.encounter.skillCount; i++) {
       this.buffer.useBookmark('skills')
       this.buffer.skip(BYTES.skills * i);
 
-      encounter.skills.push({
+      this.encounter.skills.push({
         skillId: this.buffer.readUIntLE(4),
         name: this.buffer.readString(64)
       });
     }
   }
 
-  private parseEvents (encounter) {
-    encounter.eventCount = this.buffer.remaining() / 64;
+  private parseEvents () {
+    this.encounter.eventCount = this.buffer.remaining() / BYTES.combatEvents;
     this.buffer.setBookmark('events');
 
-    for (let i = 0; i < encounter.eventCount; i++) {
+    for (let i = 0; i < this.encounter.eventCount; i++) {
       this.buffer.useBookmark('events')
       this.buffer.skip(BYTES.combatEvents * i);
       const event = {
@@ -119,11 +145,11 @@ export default class Parser {
         isShields: this.buffer.readUIntLE(1),
       };
 
-      encounter.events.push(event);
+      this.encounter.events.push(event);
     }
   }
 
-  public boss () {
+  public boss = () => {
     return this.encounter.agents.find(a => a.isBoss);
   }
 
@@ -131,7 +157,18 @@ export default class Parser {
     return this.encounter.agents.filter(a => a.isPlayer);
   }
 
-  parseDPS (encounter) {
+  public player (nameOrAccountOrId) {
+    return this.players().find(a => {
+      return a.name == nameOrAccountOrId
+        || a.account === nameOrAccountOrId
+        || a.agentId === nameOrAccountOrId;
+    });
+  }
+
+  public totalDamage () {
+  }
+
+  parseDPS () {
     return 'NOT IMPLEMENTED';
   }
 }

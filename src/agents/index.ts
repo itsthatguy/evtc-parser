@@ -1,9 +1,8 @@
-import { BaseAgent } from './base';
-import { Boss } from './boss';
-import { Gadget } from './gadget';
-import { Npc } from './npc';
-import { Player } from './player';
-import { Agent } from 'http';
+import { BaseAgent } from './Base';
+import { Boss } from './Boss';
+import { Gadget } from './Gadget';
+import { Npc } from './Npc';
+import { Player } from './Player';
 
 const splitProfession = (properties: AgentProperties) => {
   const professionBuffer = Buffer.allocUnsafe(4);
@@ -44,5 +43,3 @@ export default (encounter, properties: AgentProperties) => {
     console.error(error);
   }
 };
-
-export { Player };
